@@ -144,42 +144,20 @@ int Tree::getLCA(int u, int v) {
 	return euler[queryRMQ(firstAppearance[u], firstAppearance[v])] + 1;
 }
 
-int getLCA(Tree &tree, set<int> *taxIds, unordered_map<int, int> &encode, unordered_map<int, int> &decode) {
-    set<int> *nextTaxIds = new set<int>;
-    while(taxIds->size() >= 1) {
-        int u, v;
-        u = *taxIds->begin();
-        taxIds->erase(taxIds->begin());
-        if(taxIds->size() >= 1) {
-            v = *taxIds->begin();
-            taxIds->erase(taxIds->begin());
-//            cout << "LCA(" << u << ", " << v << ") = " << decode[tree.getLCA(encode[u], encode[v])] << endl;
-            nextTaxIds->insert(decode[tree.getLCA(encode[u], encode[v])]);
-        } else {
-            nextTaxIds->insert(u);
-            taxIds = nextTaxIds;
-            nextTaxIds = new set<int>;
+int getLCA(Tree &tree, vector<int> &taxIds, unordered_map<int, int> &encode, unordered_map<int, int> &decode) {
+    int lca;
+    if(taxIds.size() >= 2) {
+        lca = tree.getLCA(encode[taxIds[0]], encode[taxIds[1]]);
+        lca = decode[lca];
+        for(int i = 2; i < taxIds.size(); i++) {
+            lca = tree.getLCA(encode[lca], encode[taxIds[i]]);
+            lca = decode[lca];
         }
+        return lca;
+    } else {
+        return taxIds[0];
     }
-    return *nextTaxIds->begin();
-//    cout << endl << endl;
-//    int lca;
-//    if(taxIds.size() >= 2) {
-//        lca = tree.getLCA(encode[taxIds[0]], encode[taxIds[1]]);
-//        lca = decode[lca];
-////        cout << "LCA(" << taxIds[0] << ", " << taxIds[1] << ") = " << lca << "/" << decode[lca] << "\n";
-//        for(int i = 2; i < taxIds.size(); i++) {
-////            cout << "LCA(" << decode[lca] << ", " << taxIds[i] << ") = ";
-//            lca = tree.getLCA(encode[lca], encode[taxIds[i]]);
-//            lca = decode[lca];
-////            cout << lca << "/" << decode[lca] << "\n";
-//        }
-//        return lca;
-//    } else {
-//        return taxIds[0];
-//    }
 }
-
 
 int main(int argc, char *argv[]) {
     if(argc == 3) {
@@ -208,30 +186,27 @@ int main(int argc, char *argv[]) {
             }
             lca.addEdge(encode[u], encode[v]);
         }
-
         lca.doEulerWalk();
-
         string currentRead, nextRead;
         int currentTaxId, nextTaxId;
         int currentKmer, nextKmer;
-        set<int> taxIds;
+        vector<int> taxIds;
         queries >> currentRead >> currentTaxId >> currentKmer;
-        taxIds.insert(currentTaxId);
+        taxIds.push_back(currentTaxId);
         while(queries >> nextRead >> nextTaxId >> nextKmer) {
             if(nextRead.compare(currentRead) == 0) {
-                taxIds.insert(nextTaxId);
+                taxIds.push_back(nextTaxId);
             } else {
                 cout << currentRead << "\t";
-                cout << getLCA(lca, &taxIds, encode, decode) << "\n";
+                cout << getLCA(lca, taxIds, encode, decode) << "\n";
                 taxIds.clear();
                 currentRead = nextRead;
-                taxIds.insert(nextTaxId);
+                taxIds.push_back(nextTaxId);
             }
         }
         cout << currentRead << "\t";
-        cout << getLCA(lca, &taxIds, encode, decode) << "\n";
+        cout << getLCA(lca, taxIds, encode, decode) << "\n";
     } else {
         cout << "Usage: " << argv[0] << " tree.tsv queries.tsv\n";
     }
 }
-
