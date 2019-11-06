@@ -7,7 +7,7 @@
 
 using namespace std;
 
-class Tree {
+class LCA {
     private:
         bool **tree;
         int *parent;
@@ -15,20 +15,22 @@ class Tree {
         vector<int> euler;
         vector<int> depth;
         int *firstAppearance;
+        unordered_map<int, int> encode, decode;
         int **M;
         int getRoot();
         void depthFirstSearch(int current, int depth);
         void preProcessRMQ();
         int queryRMQ(int i, int j);
+        void doEncode(int node);
     public:
-        Tree(int vertices);
-        virtual ~Tree();
+        LCA(int vertices);
+        virtual ~LCA();
         void addEdge(int father, int son);
         void doEulerWalk();
         int getLCA(int u, int v);
 };
 
-Tree::Tree(int vertices) {
+LCA::LCA(int vertices) {
     this->vertices = vertices;
     tree = new bool*[vertices];
     parent = new int[vertices];
@@ -40,7 +42,7 @@ Tree::Tree(int vertices) {
     }
 }
 
-Tree::~Tree() {
+LCA::~LCA() {
     for(int i = 0; i < vertices; i++) {
         delete [] tree[i];
     }
@@ -53,12 +55,21 @@ Tree::~Tree() {
     delete [] M;
 }
 
-void Tree::addEdge(int father, int son) {
-    tree[father - 1][son - 1] = true;
-    parent[son - 1] = father - 1;
+void LCA::doEncode(int node) {
+    if(encode.count(node) == 0) {
+        encode.insert({node, encode.size()});
+        decode.insert({decode.size(), node});
+    }
 }
 
-void Tree::depthFirstSearch(int current, int depth) {
+void LCA::addEdge(int father, int son) {
+    doEncode(father);
+    doEncode(son);
+    tree[encode[father]][encode[son]] = true;
+    parent[encode[son]] = encode[father];
+}
+
+void LCA::depthFirstSearch(int current, int depth) {
     // marking first appearance for current node
     if(firstAppearance[current] == -1) {
         firstAppearance[current] = euler.size();
@@ -76,13 +87,13 @@ void Tree::depthFirstSearch(int current, int depth) {
     }
 }
 
-void Tree::doEulerWalk() {
+void LCA::doEulerWalk() {
     int root = getRoot();
     depthFirstSearch(root, 0);
     preProcessRMQ();
 }
 
-int Tree::getRoot() {
+int LCA::getRoot() {
     for(int i = 0; i < vertices; i++) {
         if(parent[i] == -1) {
             return i;
@@ -92,7 +103,7 @@ int Tree::getRoot() {
 }
 
 // <O(N logN) Preprocessing time, O(1) Query time>
-void Tree::preProcessRMQ() {
+void LCA::preProcessRMQ() {
     M = new int*[depth.size()];
     int logDepth = log2(depth.size());
     for(unsigned int i = 0; i < depth.size(); i++) {
@@ -115,7 +126,7 @@ void Tree::preProcessRMQ() {
     }
 }
 
-int Tree::queryRMQ(int i, int j) {
+int LCA::queryRMQ(int i, int j) {
     if(i > j) {
         swap(i, j);
     }
@@ -129,11 +140,12 @@ int Tree::queryRMQ(int i, int j) {
     }
 }
 
-int Tree::getLCA(int u, int v) {
-    u--; v--;
+int LCA::getLCA(int u, int v) {
+    u = encode[u];
+    v = encode[v];
 	// trivial case
 	if (u == v) {
-        return u + 1;
+        return u;
 	}
 
 	if(firstAppearance[u] > firstAppearance[v]) {
@@ -141,17 +153,15 @@ int Tree::getLCA(int u, int v) {
 	}
 
 	// doing RMQ in the required range
-	return euler[queryRMQ(firstAppearance[u], firstAppearance[v])] + 1;
+	return decode[euler[queryRMQ(firstAppearance[u], firstAppearance[v])]];
 }
 
-int getLCA(Tree &tree, vector<int> &taxIds, unordered_map<int, int> &encode, unordered_map<int, int> &decode) {
+int getLCA(LCA &tree, vector<int> &taxIds) {
     int lca;
     if(taxIds.size() >= 2) {
-        lca = tree.getLCA(encode[taxIds[0]], encode[taxIds[1]]);
-        lca = decode[lca];
+        lca = tree.getLCA(taxIds[0], taxIds[1]);
         for(int i = 2; i < taxIds.size(); i++) {
-            lca = tree.getLCA(encode[lca], encode[taxIds[i]]);
-            lca = decode[lca];
+            lca = tree.getLCA(lca, taxIds[i]);
         }
         return lca;
     } else {
@@ -161,36 +171,30 @@ int getLCA(Tree &tree, vector<int> &taxIds, unordered_map<int, int> &encode, uno
 
 int main(int argc, char *argv[]) {
     if(argc == 3) {
-        int u, v;
-        ifstream tree(argv[1]);
+        int father, son;
+
         ifstream vertices(argv[1]);
+        // counts the number of distinct vertices in the tree
         set<int> distinctVertices;
-        while(vertices >> u >> v) {
-            distinctVertices.insert(u);
-            distinctVertices.insert(v);
+        while(vertices >> father >> son) {
+            distinctVertices.insert(father);
+            distinctVertices.insert(son);
         }
-        Tree lca(distinctVertices.size());
-        ifstream queries(argv[2]);
-        unordered_map<int, int> encode, decode;
-        int counter = 1;
-        while(tree >> u >> v) {
-            if(encode.count(u) == 0) {
-                encode.insert({u, counter});
-                decode.insert({counter, u});
-                counter++;
-            }
-            if(encode.count(v) == 0) {
-                encode.insert({v, counter});
-                decode.insert({counter, v});
-                counter++;
-            }
-            lca.addEdge(encode[u], encode[v]);
+
+
+        LCA lca(distinctVertices.size());
+        ifstream tree(argv[1]);
+        while(tree >> father >> son) {
+            lca.addEdge(father, son);
         }
+
         lca.doEulerWalk();
+
         string currentRead, nextRead;
         int currentTaxId, nextTaxId;
         int currentKmer, nextKmer;
         vector<int> taxIds;
+        ifstream queries(argv[2]);
         queries >> currentRead >> currentTaxId >> currentKmer;
         taxIds.push_back(currentTaxId);
         while(queries >> nextRead >> nextTaxId >> nextKmer) {
@@ -198,14 +202,14 @@ int main(int argc, char *argv[]) {
                 taxIds.push_back(nextTaxId);
             } else {
                 cout << currentRead << "\t";
-                cout << getLCA(lca, taxIds, encode, decode) << "\n";
+                cout << getLCA(lca, taxIds) << "\n";
                 taxIds.clear();
                 currentRead = nextRead;
                 taxIds.push_back(nextTaxId);
             }
         }
         cout << currentRead << "\t";
-        cout << getLCA(lca, taxIds, encode, decode) << "\n";
+        cout << getLCA(lca, taxIds) << "\n";
     } else {
         cout << "Usage: " << argv[0] << " tree.tsv queries.tsv\n";
     }
