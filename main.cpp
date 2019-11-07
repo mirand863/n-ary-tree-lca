@@ -24,6 +24,7 @@ class LCA {
         void addEdge(string father, string son);
         void doEulerWalk();
         string getLCA(string u, string v);
+        string getLCA(vector<string> &taxIds);
 };
 
 LCA::LCA() {
@@ -121,12 +122,12 @@ string LCA::getLCA(string u, string v) {
 	return euler[queryRMQ(firstAppearance[u], firstAppearance[v])];
 }
 
-string getLCA(LCA &tree, vector<string> &taxIds) {
+string LCA::getLCA(vector<string> &taxIds) {
     string lca;
     if(taxIds.size() >= 2) {
-        lca = tree.getLCA(taxIds[0], taxIds[1]);
+        lca = getLCA(taxIds[0], taxIds[1]);
         for(int i = 2; i < taxIds.size(); i++) {
-            lca = tree.getLCA(lca, taxIds[i]);
+            lca = getLCA(lca, taxIds[i]);
         }
         return lca;
     } else {
@@ -157,14 +158,14 @@ int main(int argc, char *argv[]) {
                 taxIds.push_back(nextTaxId);
             } else {
                 cout << currentRead << "\t";
-                cout << getLCA(lca, taxIds) << "\n";
+                cout << lca.getLCA(taxIds) << "\n";
                 taxIds.clear();
                 currentRead = nextRead;
                 taxIds.push_back(nextTaxId);
             }
         }
         cout << currentRead << "\t";
-        cout << getLCA(lca, taxIds) << "\n";
+        cout << lca.getLCA(taxIds) << "\n";
     } else {
         cout << "Usage: " << argv[0] << " tree.tsv queries.tsv\n";
     }
