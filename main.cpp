@@ -109,17 +109,22 @@ int LCA::queryRMQ(int i, int j) {
 }
 
 string LCA::getLCA(string u, string v) {
-	// trivial case
-	if (u.compare(v) == 0) {
+    // trivial case
+    if (u.compare(v) == 0) {
         return u;
-	}
+    }
 
-	if(firstAppearance[u] > firstAppearance[v]) {
+    int firstAppearanceOfU = firstAppearance[u];
+    int firstAppearanceOfV = firstAppearance[v];
+    if(firstAppearanceOfU > firstAppearanceOfV) {
         swap(u, v);
-	}
+        int aux = firstAppearanceOfU;
+        firstAppearanceOfU = firstAppearanceOfV;
+        firstAppearanceOfV = aux;
+    }
 
-	// doing RMQ in the required range
-	return euler[queryRMQ(firstAppearance[u], firstAppearance[v])];
+    // doing RMQ in the required range
+    return euler[queryRMQ(firstAppearanceOfU, firstAppearanceOfV)];
 }
 
 string LCA::getLCA(vector<string> &taxIds) {
