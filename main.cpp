@@ -92,15 +92,12 @@ void LCA::doEulerWalk() {
 // <O(N logN) Preprocessing time, O(1) Query time>
 void LCA::preProcessRMQ() {
     M = new int*[depth.size()];
-    int logDepth = log2(depth.size());
+    int logDepth = ceil(log2(depth.size()));
     for(unsigned int i = 0; i < depth.size(); i++) {
         M[i] = new int[logDepth];
+        M[i][0] = i; //initialize M for the intervals with length 1
     }
 
-    //initialize M for the intervals with length 1
-    for(unsigned int i = 0; i < depth.size(); i++) {
-        M[i][0] = i;
-    }
     //compute values from smaller to bigger intervals
     for(unsigned int j = 1; 1 << j <= depth.size(); j++) {
         for(unsigned int i = 0; i + (1 << j) - 1 < depth.size(); i++) {
