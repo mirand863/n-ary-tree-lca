@@ -46,5 +46,6 @@ Query2	b
 ```
 # Usage:
 ```
-./lca tree.tsv queries.tsv
+./lca tree.tsv queries.tsv root
+e.g.: ./lca test_tree.tsv test_queries.tsv a
 ```
