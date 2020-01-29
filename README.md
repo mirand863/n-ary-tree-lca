@@ -44,7 +44,7 @@ Query1	g
 Query2	g
 Query2	b
 ```
-#Usage:
+# Usage:
 ```
 ./lca tree.tsv queries.tsv
 ```
