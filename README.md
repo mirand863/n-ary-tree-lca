@@ -10,7 +10,7 @@ g++ -o lca main.cpp
 
 # Input Files
 ## Tree
-The input for the tree should be in the tsv format, where the first column is the father node and the second coluns contains the son. For example, supposing we have the given tree:
+The input for the tree should be in the tsv format, where the first column is the father node and the second column contains the son. For example, supposing we have the given tree:
 ```
    a
  / | \
