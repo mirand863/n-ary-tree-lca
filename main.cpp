@@ -25,7 +25,7 @@ class LCA {
         LCA();
         virtual ~LCA();
         void addEdge(string father, string son);
-        void doEulerWalk();
+        void doEulerWalk(string root);
         int getLCA(int u, int v);
         string getLCA(vector<string> &taxIds);
 };
@@ -80,12 +80,12 @@ void LCA::depthFirstSearch(string current, int depth) {
     }
 }
 
-void LCA::doEulerWalk() {
+void LCA::doEulerWalk(string root) {
     firstAppearance = new int[vertices];
     for(int i = 0; i < vertices; i++) {
         firstAppearance[i] = -1;
     }
-    depthFirstSearch("1", 0);
+    depthFirstSearch(root, 0);
     preProcessRMQ();
 }
 
@@ -152,37 +152,36 @@ string LCA::getLCA(vector<string> &taxIds) {
 }
 
 int main(int argc, char *argv[]) {
-    if(argc == 3) {
-        string father, son;
+    if(argc == 4) {
+        string father, son, root;
         LCA lca;
         ifstream tree(argv[1]);
         while(tree >> father >> son) {
             lca.addEdge(father, son);
         }
 
-        lca.doEulerWalk();
+        lca.doEulerWalk(argv[3]);
 
-        string currentRead, nextRead;
-        string currentTaxId, nextTaxId;
-        int currentKmer, nextKmer;
-        vector<string> taxIds;
+        string currentQuery, nextQuery;
+        string currentNode, nextNode;
+        vector<string> nodes;
         ifstream queries(argv[2]);
-        queries >> currentRead >> currentTaxId >> currentKmer;
-        taxIds.push_back(currentTaxId);
-        while(queries >> nextRead >> nextTaxId >> nextKmer) {
-            if(nextRead.compare(currentRead) == 0) {
-                taxIds.push_back(nextTaxId);
+        queries >> currentQuery >> currentNode;
+        nodes.push_back(currentNode);
+        while(queries >> nextQuery >> nextNode) {
+            if(nextQuery.compare(currentQuery) == 0) {
+                nodes.push_back(nextNode);
             } else {
-                cout << currentRead << "\t";
-                cout << lca.getLCA(taxIds) << "\n";
-                taxIds.clear();
-                currentRead = nextRead;
-                taxIds.push_back(nextTaxId);
+                cout << currentQuery << "\t";
+                cout << lca.getLCA(nodes) << "\n";
+                nodes.clear();
+                currentQuery = nextQuery;
+                nodes.push_back(nextNode);
             }
         }
-        cout << currentRead << "\t";
-        cout << lca.getLCA(taxIds) << "\n";
+        cout << currentQuery << "\t";
+        cout << lca.getLCA(nodes) << "\n";
     } else {
-        cout << "Usage: " << argv[0] << " tree.tsv queries.tsv\n";
+        cout << "Usage: " << argv[0] << " tree.tsv queries.tsv root\n";
     }
 }
